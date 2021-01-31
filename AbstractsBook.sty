@@ -1,0 +1,602 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%             Package  AbstractsBook.sty                          %%
+%%    Complement to the mother class AbstractsCRM                  %%
+%%  It allows the processing of all abstracts in a bunch           %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% This is a package (.sty) file for LaTeX2e
+%% subordinated to the AbstractsCRM class
+%%
+%% Author:      Lluís Alsedà
+%%              Departament de Matemàtiques
+%%              Universitat Autònoma de Barcelona
+%%              08193-Cerdanyola del Vallès
+%%              Barcelona, SPAIN
+%%
+%%              alseda@mat.uab.cat
+%%
+%% Feel free to copy, modify, and distribute.
+%% I am interested in all changes you make.
+%% Send relevant changes to alseda@mat.uab.cat
+%%
+%% The aim of this package is to create a method to produce
+%% the abstracts book of a meeting from the individual standalone
+%% abstracts LaTeX files. Moreover this abstracts book has to have
+%% cilckable table of contents of talks and speakers,
+%% index of speakers and index of authors
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% A typical abstracts book latex file reads as follows
+%%
+%% \documentclass{AbstractsCRM}
+%% \usepackage[dataOption, formatOption, draftOption]{AbstractsBook} % Possible package options are:
+%%   % dataOption: data/nodata (generates/doesn't generate a .dat file with data to parse)
+%%   % formatOption: forprinting (printable book format for a physical booklet)
+%%                 % forwebpdf   (pdf format, to be read on screens)
+%%                 % forepubpdf  (epub-like pdf, to be read on e-readers)
+%%   % draftOption: draft/final (prints/doesn't print a watermark for the last date of production of the booklet)
+%% \MeetingGeneralData[Acronym]{Name of the meeting}{Venue}{Date}
+%% \date{production date} % optional
+%% \editors{editors of the abstracts book} % optional
+%%
+%% \begin{document}
+%% \begin{organizers}
+%%  \committee{Organizing Committee}
+%%   Blanca Bosch, Centre de Recerca Matem\`atica\\
+%%   Pere P. Puig, University of Studies\\
+%%  \committee{Scientific Committee}
+%%   Blanca Bosch, Centre de Recerca Matem\`atica\\
+%%   Laurent Losqui\~no, Centre de Recerca Matem\`atica\\
+%% \end{organizers}
+%% \bookletAcknowledgments{Acknowledgments go here}
+%%
+%% \tableofcontents
+%% 
+%% \begin{schedule}[1.1] % Optional parameter controls \arraystretch
+%% \day{Monday, 22nd of July 2019}
+%%  \event{10:00--10:30}{Registration}
+%%  \talk{10:30--11:00}[\sc Welcome Lecture]{abstract-3} % This optional parameter replaces the contents of the first row
+%%  \event{11:00--11:30}{Coffee Break}
+%%  \talk{11:30--13:00}{abstract-4}
+%%  \event{13:00--15:00}{Lunch}
+%%  \talk{15:00--16:00}{abstract-2}
+%%  \talk{16:00--17:00}{abstract-3}
+%% \day{Tuesday, 23nd of July 2019}
+%%  \talk{09:00--10:00}{abstract-1}
+%%  \talk{10:00--11:00}{abstract-5}
+%%  \newpage
+%%  \event{11:00--11:30}{Group Photo + Coffee Break}
+%%  \talk{11:30--13:00}{abstract-4}[Workshop on the talk] % This optional parameter replaces the contents of the second row
+%%  \event{13:00--15:00}{Lunch}
+%%  \talk{15:00--16:00}{abstract-6}
+%%  \talk{16:00--17:00}[\sc Closing Lecture]{abstract-3}
+%% \end{schedule}
+%% 
+%% \mainmatter
+%%
+%% \AbstractsOfThe{Lectures}
+%% \abstractfile{abstract-1}
+%% \abstractfile{abstract-2}
+%%
+%% \AbstractsOfThe{Worshops}
+%% \abstractfile{abstract-3}
+%% \abstractfile{abstract-4}
+%%
+%% \part{Special Session: Complex Dynamics} % Use \part for longer titles
+%% \abstractfile{abstract-5}
+%% \abstractfile{abstract-6}
+%% 
+%% \begin{listofparticipants}[0.8] % Optional parameter controls \arraystretch
+%%  Agust\'i Andreu & Universitat Polit\`ecnica de Catalunya\\
+%%  Guillermo G\'omez & Universitat Aut\`onoma de Barcelona\\
+%%  Katerina Katona & Hungarian Academy of Sciences\\
+%%  Nat\`alia Navarro & Universitat Aut\`onoma de Barcelona\\
+%%  \v Zarko Zori\'c & University of Zagreb\\
+%% \end{listofparticipants}
+%% \end{document}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\NeedsTeXFormat{LaTeX2e}
+\def\packagename{AbstractsBook}
+\ProvidesPackage{\packagename}[2012/05/27 v1.1 complement to class AbstractsCRM to produce full abstracts book]
+\newif\if@color@option@%
+\newif\if@bigfont@option@%
+\newif\if@twoside@option@%
+\newif\if@data@option@%
+\newif\if@fillerpages@option@%
+\newif\if@draft@option@%
+\DeclareOption{forprinting}{%
+	\@color@option@false%
+	\@bigfont@option@false%
+	\@twoside@option@true%
+	\@fillerpages@option@true%
+}
+\DeclareOption{forwebpdf}{%
+	\@color@option@true%
+	\@bigfont@option@false%
+	\@twoside@option@false%
+	\@fillerpages@option@false%
+}
+\DeclareOption{forepubpdf}{%
+	\@color@option@false%
+	\@bigfont@option@true%
+	\@twoside@option@false%
+	\@fillerpages@option@false%
+}
+\DeclareOption{data}{\@data@option@true}%
+\DeclareOption{nodata}{\@data@option@false}%
+\DeclareOption{draft}{\@draft@option@true}%
+\DeclareOption{final}{\@draft@option@false}%
+\ProcessOptions%
+%
+% general Packages
+%
+\RequirePackage{etextools} % To control expansion of index command
+\RequirePackage{graphicx, color, colortbl, hhline} % For graphics, logo, images and hyperref
+\RequirePackage{fancyhdr} % For headers and footers
+\RequirePackage{index} % For multiIndexes
+\RequirePackage{longtable}
+\RequirePackage{titlesec}
+\RequirePackage{anyfontsize}
+\RequirePackage{wallpaper}
+\RequirePackage{everyshi} \EveryShipout{\global\advance \count1 by 1}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Sizes and formats base definitions %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\if@color@option@%
+	\RequirePackage[final, colorlinks, pdfpagelabels]{hyperref} % Hyperrefs: hyperref package must be the last package load
+	\hypersetup{linkcolor=black, urlcolor=redCRM}%
+	\definecolor{scheduleRowsLightGrayCRM}{rgb}{0.83, 0.82, 0.82} % 211 210 210 / 255
+	\definecolor{redCRM}{rgb}{0.53, 0.07, 0.22} % 135 19 36 / 255+
+	\definecolor{darkGrayCRM}{rgb}{0.14, 0.12, 0.13} % 35 31 32 / 255
+	\gdef\@Logo{BookletLogo.pdf}%
+	\gdef\@Part{BookletPartBackground.pdf}%
+\else%
+	\RequirePackage[draft, pdfpagelabels]{hyperref} % Hyperrefs: hyperref package must be the last package load
+	\definecolor{scheduleRowsLightGrayCRM}{rgb}{0.9, 0.9, 0.9}%
+	\definecolor{redCRM}{rgb}{0, 0, 0} % 135 19 36 / 255
+	\definecolor{darkGrayCRM}{rgb}{0, 0, 0} % 35 31 32 / 255
+	\gdef\@Logo{BookletLogoBW.pdf}%
+	\gdef\@Part{BookletPartBackground.pdf}%
+\fi%
+\if@bigfont@option@%
+	\RequirePackage{palatino}%
+	\RequirePackage[20pt]{extsizes}%
+	\sloppy%
+	\setlength{\headheight}{32pt}%
+	\setlength{\headsep}{2ex}%
+	\def\@head@text@size{\large}%
+\else%
+	\setlength{\headheight}{32pt}%
+	\setlength{\headsep}{10ex}%
+	\def\@head@text@size{\relax}%
+\fi%
+\if@twoside@option@%
+	\def\@part@title{}%
+	\pagestyle{fancy}%
+	\renewcommand{\headrulewidth}{0pt}%
+	\fancyhead[RO,LE]{\includegraphics[height=.8cm]{\@Logo}}%
+	\fancyhead[LO,RE]{\@head@text@size\@part@title}%
+	\fancyfoot[C]{\@head@text@size\thepage}%
+	\fancypagestyle{fancyWithoutPartName}{%
+		\renewcommand{\headrulewidth}{0pt}%
+		\fancyhead[RO,LE]{\includegraphics[height=.8cm]{\@Logo}}%
+		\fancyhead[LO,RE]{\empty}%
+		\fancyfoot[C]{\@head@text@size\thepage}%
+	}%
+	\setlength\oddsidemargin  {\paperwidth}%
+	\addtolength\oddsidemargin{-\textwidth}%
+	\divide\oddsidemargin by 2%
+	\addtolength\oddsidemargin{-1in}%
+	\addtolength\oddsidemargin{-\hoffset}%
+	\setlength\evensidemargin {\oddsidemargin}%
+	\gdef\cleardoublepage{\clearpage\ifodd\c@page\else\hbox{}\thispagestyle{empty}\newpage\fi}%
+\else%
+	\def\@part@title{}%
+	\pagestyle{fancy}%
+	\renewcommand{\headrulewidth}{0pt}%
+	\fancyhead[R]{\includegraphics[height=.8cm]{\@Logo}}%
+	\fancyhead[L]{\@head@text@size\@part@title}%
+	\fancyfoot[C]{\@head@text@size\thepage}%
+	\fancypagestyle{fancyWithoutPartName}{%
+		\renewcommand{\headrulewidth}{0pt}%
+		\fancyhead[R]{\includegraphics[height=.8cm]{\@Logo}}%
+		\fancyhead[L]{\empty}%
+		\fancyfoot[C]{\@head@text@size\thepage}%
+	}%
+	\setlength\oddsidemargin  {\paperwidth}%
+	\addtolength\oddsidemargin{-\textwidth}%
+	\divide\oddsidemargin by 2%
+	\addtolength\oddsidemargin{-1in}%
+	\addtolength\oddsidemargin{-\hoffset}%
+	\setlength\evensidemargin {\oddsidemargin}%
+	\gdef\cleardoublepage{\clearpage}%
+\fi%
+\if@data@option@%
+	\newwrite\@data%
+	\immediate\openout\@data=\jobname.dat%
+	\global\edef\collect@data[#1]#2{%
+		\write\@data{#1: #2}%
+	}%
+\else%
+	\gdef\collect@data[#1]#2{\empty}%
+\fi%
+
+\newcommand{\mainmatter}{\pagenumbering{arabic}}%
+%%%%%%%%%%%%%%%%%%%%
+% Package Commands %
+%%%%%%%%%%%%%%%%%%%%
+\def\ThisPackageError#1{\PackageError{\packagename}{#1}{}}%
+%
+% Redefinitions of Article class to be more bookish and to deal with class AbstractsCRM definitions
+% Style of the subsection headings
+\newcommand{\subsectionTitle}[1]{\begingroup\hspace{-5pt}\bf\Large\textcolor{redCRM}{\rule[-.3ex]{5pt}{.8em}}\space #1\endgroup}%
+% Tableofcontents
+\renewcommand\tableofcontents{%
+	\cleardoublepage%
+	\gdef\@part@title{\contentsname}%
+	\section*{\subsectionTitle{\contentsname}\thispagestyle{fancyWithoutPartName}}%
+	\begingroup%
+		\def\@gobbleOpt[##1]{\empty}\def\\{\@ifnextchar[{\@gobbleOpt}{\empty}}%
+		\@starttoc{toc}%
+	\endgroup%
+	\cleardoublepage%
+}
+
+% Part style with the CRM squares behind red text
+\newlength{\@title@skip} % To center the title
+\renewcommand{\part}[2][\empty]{%
+	\cleardoublepage%
+	\refstepcounter{part}\addcontentsline{toc}{part}{#2}%
+	\thispagestyle{empty}%
+%	\null\vspace{\fill}%
+	\setlength{\@title@skip}{0.5\textheight-72pt}%
+	\null\vspace{\@title@skip}%
+	\begin{center}\begingroup%
+		\setlength{\headheight}{0pt}%
+		\setlength{\headsep}{0pt}%
+		{\color{redCRM}\bf\fontsize{60}{72}\selectfont #2}%
+		\vspace*{2cm}
+		\thispagestyle{empty}%
+		\ThisCenterWallPaper{0.7}{\@Part}%
+	\endgroup\end{center}
+%	\vspace{\fill}\null%
+	\ifx#1\empty%
+		\gdef\@part@title{#2}%
+	\else%
+		\gdef\@part@title{#1}%
+	\fi%
+	\cleardoublepage%
+}
+% Part style with the CRM squares behind red and gray text, for 3 lines
+\newcommand{\bigPartTitle}[4][\empty]{%
+	\cleardoublepage%
+	\refstepcounter{part}\addcontentsline{toc}{part}{#2 #3 #4}%
+	\thispagestyle{empty}%
+	\thispagestyle{empty}%
+	\ThisCenterWallPaper{0.7}{\@Part}%
+	\setlength{\@title@skip}{0.5\textheight-4cm-60pt-30pt}%
+	\null\vspace{\@title@skip}%
+	\begin{center}\begingroup%
+		\setlength{\headheight}{0pt}%
+		\setlength{\headsep}{0pt}%
+		{\color{redCRM}\bf\fontsize{60}{60}\selectfont #2\par}%
+		\vspace{2cm}%
+		{\color{darkGrayCRM}\bf\fontsize{50}{50}\selectfont #3\par}%
+		\vspace*{2cm}%
+		{\color{redCRM}\bf\fontsize{60}{60}\selectfont #4\par}%
+	\endgroup\end{center}%
+	\ifx#1\empty%
+		\gdef\@part@title{#2 #3 #4}%
+	\else%
+		\gdef\@part@title{#1}%
+	\fi%
+	\cleardoublepage%
+}%
+% Shortcut to \bigPartTitle{Abstracts}{of the}{Workshops}
+\newcommand{\AbstractsOfThe}[2][\empty]{%
+	\bigPartTitle[#1]{Abstracts}{of the}{#2}%
+	\collect@data[Abstracts of the]{#2}%
+}%
+
+% General titles and authors
+\AtBeginDocument{%
+\if@draft@option@%
+	\RequirePackage[firstpage]{draftwatermark}%
+	\SetWatermarkText{Draft: \today}%
+	\SetWatermarkColor[gray]{0.5}%
+	\SetWatermarkFontSize{1cm}%
+	\SetWatermarkAngle{90}%
+	\SetWatermarkHorCenter{3\oddsidemargin}%
+\fi%
+\pagenumbering{roman}\global\let\maketitle\relax%
+\begin{titlepage}%
+	\let\footnotesize\small%
+	\let\footnoterule\relax%
+	\let \footnote \thanks%
+	\null%
+	\begin{center}%
+		{\LARGE \@title \par}%
+		\vskip 3em%
+			{\large%
+			\lineskip .75em%
+			\begin{tabular}[t]{c}%
+				\@author%
+			\end{tabular}\par}%
+		\vskip 1.5em%
+		{\large \@date \par}%       % Set date in \large size.
+	\end{center}\par%
+	\@thanks%
+	\vfil%\null
+\end{titlepage}%
+\cleardoublepage%
+\setcounter{footnote}{0}%
+}%
+\def\editors#1{\gdef\@author{#1}}%
+\def\MeetingGeneralData{\@ifnextchar[{\@MeetingGeneralDataID}{\@MeetingGeneralDataNoID}}%
+\long\def\@MeetingGeneralDataID[#1]#2#3#4{%
+	\collect@data[ID]{#1}%
+	\gdef\@title{#1\\[2mm] #2 \\[10mm] {\large #3} \\[5mm] {\normalsize #4} \\[4cm] Abstracts Book}%
+	\collect@data[BookletTitle]{#2}%
+	\collect@data[Location]{#3}%
+	\collect@data[Date]{#4}%
+	\hypersetup{pdftitle={#2}, pdfsubject={#3, #4}, pdfauthor={The Organizing Committee}}%
+}%
+\long\def\@MeetingGeneralDataNoID#1#2#3{%
+	\gdef\@title{#1 \\[10mm] {\large #2} \\[5mm] {\normalsize #3} \\[4cm] Abstracts Book}%
+	\collect@data[BookletTitle]{#1}%
+	\collect@data[Location]{#2}%
+	\collect@data[Date]{#3}%
+	\hypersetup{pdftitle={#1}, pdfsubject={#2, #3}, pdfauthor={The Organizing Committee}}%
+}%
+\def\@author{}%
+\def\@date{}%
+
+%
+% Basic environment abstract
+%
+\renewcommand{\@dotsep}{1.5}%
+\def\@reverse@name#1, #2{#2 #1}%
+
+% Special input procedure for abstract files
+\newcommand{\abstractfile}[1]{\begingroup%
+	\let\document\relax\let\enddocument\relax%
+	\newenvironment{document}{}{}%
+	\renewcommand{\documentclass}[2][]{}%
+	\setcounter{equation}{0}%
+	
+	\collect@data[\space Abstract]{#1}%
+	\def\@abstract@relative@label##1{#1Label##1}% % Necessary for bibliography and for hyperref not to get lost
+	
+	% Redefinition of abstract commands for indexing
+	\let\@first@author@index\relax%
+	\def\speaker##1##2{%
+		\ifnum\c@speaker@number=0%
+			\def\@speaker@name{##1 ##2}%
+			\gdef\index@speaker@name{##2, ##1}%
+			\collect@data[\space\space Speaker]{\index@speaker@name}%
+			\index[authors]{##2, ##1}%
+			\@author@base@command[\underline]{##1}{##2}%
+			\setcounter{speaker@number}{\c@author@number}%
+		\else%
+			\ThisClassError{Only one \noexpand\speaker is permitted}
+		\fi%
+	}%
+	\def\author##1##2{%
+		\ifnum\c@author@number=0%
+			\gdef\@first@author@index{##2, ##1}%
+			\gdef\@first@author@name{##1 ##2}%
+		\else%
+			\collect@data[\space\space Author]{##2, ##1}%
+			\index[authors]{##2, ##1!{\em see} \nameref{#1LabelSpeaker}}%
+		\fi%
+	    \@author@base@command[\relax]{##1}{##2}%
+	}%
+	\def\address##1##2{%
+		\def\@dummy{##1}\ifx\@dummy\empty\ThisPackageError{No \noexpand\address institution given}\fi%
+		\def\@dummy{##2}\ifx\@dummy\empty\ThisPackageError{No \noexpand\address direction given}\fi%
+		\expandafter\gdef\csname @full@address\romannumeral\the\c@author@number\endcsname{##1, ##2}%
+		\expandafter\gdef\csname @institution@address\romannumeral\the\c@author@number\endcsname{##1}%
+	}%
+	\renewenvironment{abstract}{%
+		\phantomsection\@maketitle%
+		\ifx\@speaker@name\relax%
+			\ifnum\c@author@number>1%
+				\ThisPackageError{There are more than one authors and no \noexpand\speaker has been given}%
+			\fi%
+			\expandnext{\index[authors]}{\@first@author@index}%
+			\expandnext{\collect@data[\space\space Speaker]}{\@first@author@index}%
+			\let\@speaker@name\@first@author@name%
+		\else%
+			\ifx\@first@author@index\relax%
+			\else%
+				\expandnext{\index[authors]}{\@first@author@index!{\em see} \nameref{#1LabelSpeaker}}%
+				\expandnext{\collect@data[\space\space Author]}{\@first@author@index}%
+			\fi%
+		\fi%
+		\protected@edef\@currentlabelname{\@title}%
+		\expandnext{\collect@data[\space\space Title]}{\@currentlabelname}%
+		\label{Title}%
+		\protected@edef\@currentlabelname{\@speaker@name}%
+		\label{Speaker}%
+		\protected@edef\@currentlabelname{\csname @institution@address\romannumeral\the\c@speaker@number\endcsname}%
+%		{\bf\Large \@currentlabelname\par}
+%		\protected@edef\@currentlabelname{\csname @institution@address\romannumeral\the\c@author@number\endcsname}%
+		\label{Institution}%
+		\addcontentsline{toc}{subsection}{{\sc\@speaker@name}, {\csname @institution@address\romannumeral\the\c@speaker@number\endcsname}}%
+		\addtocontents{toc}{\vspace*{-0.6ex}{\em\linespread{.3}\setlength{\leftskip}{3em}\setlength{\rightskip}{3em}\footnotesize \@title\par}}%
+	}{%\hbox{}\newpage%
+		\@acknowledgments%
+		\global\let\@acknowledgments\empty%
+		\setcounter{author@number}{0}%
+		\setcounter{speaker@number}{0}%
+		\global\let\@title\@empty%
+		\global\let\@first@author@index\relax%
+		\global\let\@author\@empty%
+		\global\let\@collaborators\@empty%
+		\clearpage
+	}%
+	\input{#1}%
+\endgroup}%
+
+%
+% Schedule
+%
+\newenvironment{schedule}[1][1.2]{%
+	\cleardoublepage%
+	\begingroup%
+	\part{Schedule}%
+	\renewcommand{\arraystretch}{#1}%
+	\newcommand{\separator}{\hhline{~-}}%
+	\def\day##1{%
+		\end{longtable}%
+			{\if@bigfont@option@\newpage\fi\subsectionTitle{##1}}%
+		\begin{longtable}[c]{lp{\textwidth-8em}}%
+	}%
+	\def\event##1##2{%
+		\rowcolor{scheduleRowsLightGrayCRM}%
+		\multicolumn{1}{c}{##1}&\multicolumn{1}{c}{\sc ##2}\\%
+	}%
+	
+	\def\@speakerID##1{\sc\nameref{##1LabelSpeaker}, \em\nameref{##1LabelInstitution}}%
+	\def\@titleID##1{\bf\nameref{##1LabelTitle}}%
+	\def\talk##1{\@ifnextchar[{\@talkFirstParam{##1}}{\@talkSecond{##1}}}%
+	%\def\@talkFirstParam##1[##2]##3{##1&{##2}\\&\@speakerID{##3}\\}%
+	\def\@talkFirstParam##1[##2]##3{\@ifnextchar[{\@talkBothParam{##1}[##2]{##3}}{##1&{##2}\\&\@speakerID{##3}\\}}%
+		\def\@talkBothParam##1[##2]##3[##4]{##1&{##2}\\&{##4}\\}%
+	\def\@talkSecond##1##2{\@ifnextchar[{\@talkSecondParam{##1}{##2}}{\@talkZeroParam{##1}{##2}}}%
+		\def\@talkSecondParam##1##2[##3]{##1&{\@titleID{##2}}\\&##3\\}%
+		\def\@talkZeroParam##1##2{##1&{\@titleID{##2}}\\&\@speakerID{##2}\\}%
+	
+	\arrayrulecolor{scheduleRowsLightGrayCRM}%
+	\begin{longtable}[c]{lp{11.35cm}}%
+}{%
+	\end{longtable}%
+	\endgroup%
+	\cleardoublepage%
+}%
+
+%
+% Organizers
+%
+\newenvironment{organizers}{%
+	\thispagestyle{empty}%
+	\setlength{\headheight}{0pt}%
+	\setlength{\headsep}{0pt}%
+	\def\committee##1{\vspace*{1cm}{\bf\Large ##1:}\\[1ex]}%
+	\vspace*{\fill}\begin{center}%
+	%
+}{%
+	\end{center}\vspace*{\fill}%
+	\newpage%
+}%
+%\newenvironment{organizers}{%
+%	\thispagestyle{empty}%
+%	\setlength{\headheight}{0pt}%
+%	\setlength{\headsep}{0pt}%
+%	\vspace*{\fill}\begin{center}%
+%	{\bf\Large Organizers:}\\[1ex]%
+%}{%
+%	\end{center}\vspace*{\fill}%
+%	\newpage%
+%}%
+
+%
+% Acknowledgments
+%
+\newcommand{\bookletAcknowledgments}[1]{%
+	\thispagestyle{empty}%
+	\vspace*{\fill}%
+	\paragraph{Acknowledgments:} #1%
+	\collect@data[Acknowledgments]{#1}%
+}%
+
+%
+% List of Participants
+%
+\newenvironment{listofparticipants}[1][1.2]{%
+	\bigPartTitle{Participants}{\&}{Collaborators}%
+	\renewcommand{\arraystretch}{#1}%
+	{\subsectionTitle{List of Participants}\addcontentsline{toc}{subsection}{List of Participants}}%
+	\if@bigfont@option@%
+		\begin{longtable}[l]{p{0.5\textwidth}p{0.5\textwidth}}%
+	\else%
+		\begin{longtable}[l]{ll}%
+	\fi%
+}{\end{longtable}}%
+
+
+%
+% Indexes
+%
+\makeindex%
+\newindex{authors}{idx}{ind}{Index of Authors}%
+\renewenvironment{theindex}{\columnseprule \z@ \columnsep 35\p@%
+   \twocolumn[\@spart{\subsectionTitle{Index of Authors}\addcontentsline{toc}{subsection}{Index of Authors}}]%
+   \parindent\z@\parskip\z@ \@plus .3\p@\relax%
+   \let\item\@idxitem%
+}{\clearpage}%
+
+\def\printindex[#1]{\edef\@indexname@{\the\@nameuse{idxtitle@#1}}%
+   \edef\@tempa{\@nameuse{idx@#1}}\@input@{\jobname.\expandafter\@second\@tempa\@nil}%
+}
+%
+\AtEndDocument{%
+	\cleardoublepage\printindex[authors]%
+	\if@fillerpages@option@ \count@\count1\divide\count@ by 4\multiply\count@ by -4\advance\count@ by \count1%
+		\ifnum\count@>\z@ \onecolumn\newpage\pagestyle{empty}\hbox{}\newpage%
+			\ifcase\count@\relax\or\hbox{}\newpage\hbox{}\newpage\or\hbox{}\newpage\fi%
+		\fi%
+	\fi%
+	\if@data@option@\immediate\closeout\@data\fi%
+}
+%
+% Tricks to handle cross references with multiple units (files)
+%
+
+% Empty prefix to \label and \ref
+\def\@abstract@relative@label#1{#1}%
+% First we redefine \ref from /hyperref/nameref.sty
+% and redefine \label in general
+\AtBeginDocument{%
+\def\NR@setref#1{\begingroup\@safe@activestrue\expandafter\endgroup%
+	\expandafter\NR@@setref\csname r@\@abstract@relative@label{#1}\endcsname%
+	}%
+	\global\let\old@label\label%
+	\gdef\label#1{\old@label{\@abstract@relative@label{#1}}}%
+}
+% We also need to redefine amsmath \label
+\def\label@in@display#1{%
+	\ifx\df@label\@empty\else%
+		\@amsmath@err{Multiple \string\label's:
+		label '\df@label' will be lost}\@eha%
+	\fi%
+	\gdef\df@label{\@abstract@relative@label{#1}}%
+}
+%
+% Bibliography
+% Trick to hande multiple bibunits:
+%    Labels are global (only one aux file -- not like in bibunits)
+%    Make the labels of each unit to be different by assigning a unique prefix to every unit.
+%    This is done by means of a counter
+% Redefinition of \bibitem
+% Also we want to supress the optional parameter of \bibitem
+\def\bibitem{\@ifnextchar[\@abstract@lbibitem\@abstract@bibitem}%
+\def\@abstract@lbibitem[#1]#2{\@abstract@bibitem{#2}}%
+\def\@abstract@bibitem#1{\@bibitem{\@abstract@relative@label{#1}}}%
+% Redefinition of \cite
+\def\@citex[#1]#2{\leavevmode%
+	\let\@citea\@empty%
+	\@cite{\@for\@citeb:=#2\do%
+		{\@citea\def\@citea{,\penalty\@m\ }%
+		\edef\@citeb{\expandafter\@firstofone\@citeb\@empty}%
+		\if@filesw%
+			\immediate\write\@auxout{\string\citation{\@citeb}}%
+		\fi%
+		\@ifundefined{b@\@abstract@relative@label{\@citeb}}{\hbox{\reset@font\bfseries ?}%
+		\G@refundefinedtrue%
+		\@latex@warning%
+			{Citation `\@citeb' on page \thepage \space undefined}}%
+			{\@cite@ofmt{\csname b@\@abstract@relative@label{\@citeb}\endcsname}}}}{#1}}%
+%
+\endinput
