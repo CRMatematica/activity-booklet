@@ -13,7 +13,7 @@ then
     touch $texFile
     
     echo "\documentclass{AbstractsCRM}
-\usepackage[nodata, final, webpdf]{AbstractsBook}
+\usepackage[nodata, final, forwebpdf]{AbstractsBook}
 \MeetingGeneralData[Acronym]{Name of the meeting}{Venue}{Date}
 \date{production date} % optional
 \editors{editors of the abstracts book} % optional
