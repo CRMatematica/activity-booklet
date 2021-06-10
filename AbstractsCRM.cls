@@ -92,14 +92,14 @@
 	\def\@dummy{#2}\ifx\@dummy\empty\ThisClassError{Missing given name in \noexpand\author command}\fi
 	\def\@dummy{#3}\ifx\@dummy\empty\ThisClassError{Missing family name in \noexpand\author command}\fi
 	\ifcase\c@author@number\def\@author{#1{#2 #3}}
-		\or\xdef\@author{\@author$^\arabic{author@number}$}
+            \or\xdef\@author{\@author$^{\arabic{author@number}}$}
 	\fi
 	\addtocounter{author@number}{1}
 	\expandafter\gdef\csname @full@address\romannumeral\the\c@author@number\endcsname{\ThisClassError{No \noexpand\address given}}
 	\expandafter\gdef\csname @email\romannumeral\the\c@author@number\endcsname{}
 	\expandafter\gdef\csname @urladdr\romannumeral\the\c@author@number\endcsname{}
 	\ifnum\c@author@number>1
-		\g@addto@macro\@author{, \mbox{#1{#2 #3}}}\xdef\@author{\@author$^\arabic{author@number}$}
+		\g@addto@macro\@author{, \mbox{#1{#2 #3}}}\xdef\@author{\@author$^{\arabic{author@number}}$}
 	\fi
 }
 
@@ -123,7 +123,7 @@
 		\ifnum\c@author@number>1
 			\bigskip\par\par
 			\count@\@ne
-			\loop $^\the\count@$ \csname @full@address\romannumeral\the\count@\endcsname.
+            \loop $^{\the\count@}$ \csname @full@address\romannumeral\the\count@\endcsname.
 			\par\par
 			\expandafter\ifx\csname @email\romannumeral\the\count@\endcsname\empty
 				\expandafter\ifx\csname @urladdr\romannumeral\the\count@\endcsname\empty
